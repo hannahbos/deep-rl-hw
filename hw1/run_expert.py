@@ -37,22 +37,26 @@ def main():
 
         import gym
         env = gym.make(args.envname)
-        max_steps = args.max_timesteps or env.spec.timestep_limit
+        max_steps = args.max_timesteps or env.spec.tags.get(
+            'wrapper_config.TimeLimit.max_episode_steps')
 
         returns = []
         observations = []
         actions = []
+        all_rewards = []
         for i in range(args.num_rollouts):
             print('iter', i)
             obs = env.reset()
             done = False
             totalr = 0.
             steps = 0
+            all_rewards.append([])
             while not done:
                 action = policy_fn(obs[None,:])
                 observations.append(obs)
                 actions.append(action)
                 obs, r, done, _ = env.step(action)
+                all_rewards[i].append(r)
                 totalr += r
                 steps += 1
                 if args.render:
@@ -60,6 +64,7 @@ def main():
                 if steps % 100 == 0: print("%i/%i"%(steps, max_steps))
                 if steps >= max_steps:
                     break
+            print('steps', steps)
             returns.append(totalr)
 
         print('returns', returns)
@@ -67,9 +72,11 @@ def main():
         print('std of return', np.std(returns))
 
         expert_data = {'observations': np.array(observations),
-                       'actions': np.array(actions)}
+                       'actions': np.array(actions),
+                       'all_rewards': all_rewards,
+                       'returns': returns}
 
-        with open(os.path.join('expert_data', args.envname + '.pkl'), 'wb') as f:
+        with open(os.path.join('experts_data', args.envname + '.pkl'), 'wb') as f:
             pickle.dump(expert_data, f, pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
