@@ -29,12 +29,12 @@ results for the HalfCheetah, the Reacher and struggles with the Humanoid, the
  in the training set to perform well.
 
 ![](analyse_hyperparameter_Ant-v2.png)
-*Ant environment. If not varied the network is trained on 20 roll outs with 128
-neurons in the hidden layer and 50 training epochs. *
+Ant environment. If not varied the network is trained on 20 roll outs with 128
+neurons in the hidden layer and 50 training epochs.
 
 ![](analyse_hyperparameter_Humanoid-v2.png)
-*Humanoid environment. If not varied the network is trained on 20 roll outs with
-128 neurons in the hidden layer and 50 training epochs. *
+Humanoid environment. If not varied the network is trained on 20 roll outs with
+128 neurons in the hidden layer and 50 training epochs.
 
 ## DAgger
 
@@ -47,16 +47,16 @@ the Reacher and the Humanoid environment. DAgger improves performance faster ove
 iterations than behavioral cloning, where the training set is kept fixed.
 
 ![](analyse_dagger_performance_Reacher-v2.png)
-*Initial network is trained on 20 roll outs, with 50 epochs and 128 hidden
+Initial network is trained on 20 roll outs, with 50 epochs and 128 hidden
 neurons. In each aggregation step one roll out is added and the network is
 trained for 5 epochs. Returns are averaged over 10 roll outs. black:expert,
-blue: BC, orange: DAgger*
+blue: BC, orange: DAgger
 
 ![](analyse_dagger_performance_Humanoid-v2.png)
-*Initial network is trained on 20 roll outs, with 50 epochs and 128 hidden
+Initial network is trained on 20 roll outs, with 50 epochs and 128 hidden
 neurons. In each aggregation step one roll out is added and the network is
 trained for 5 epochs. Returns are averaged over 10 roll outs. black:expert,
-blue: BC, orange: DAgger*
+blue: BC, orange: DAgger
 
 ## Code
 
