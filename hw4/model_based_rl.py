@@ -8,6 +8,8 @@ import utils
 from logger import logger
 from timer import timeit
 
+import h5py_wrapper_python3.wrapper as h5
+
 
 class ModelBasedRL(object):
 
@@ -85,7 +87,11 @@ class ModelBasedRL(object):
         losses = []
         ### PROBLEM 1
         ### YOUR CODE HERE
-        raise NotImplementedError
+        for epoch in range(self._training_epochs):
+            data = dataset.random_iterator(self._training_batch_size)
+            for batch, (states, actions, next_states, _, _) in enumerate(data):
+                loss = self._policy.train_step(states, actions, next_states)
+                losses.append(loss)
 
         logger.record_tabular('TrainingLossStart', losses[0])
         logger.record_tabular('TrainingLossFinal', losses[-1])
@@ -117,26 +123,27 @@ class ModelBasedRL(object):
         logger.info('Training policy....')
         ### PROBLEM 1
         ### YOUR CODE HERE
-        raise NotImplementedError
+        self._train_policy(self._random_dataset)
 
         logger.info('Evaluating predictions...')
         for r_num, (states, actions, _, _, _) in enumerate(self._random_dataset.rollout_iterator()):
-            pred_states = []
 
             ### PROBLEM 1
             ### YOUR CODE HERE
-            raise NotImplementedError
-
-            states = np.asarray(states)
-            pred_states = np.asarray(pred_states)
+            pred_states = [states[0]]
+            for i,action in enumerate(actions):
+                print(r_num, i)
+                pred_states.append(self._policy.predict(pred_states[-1], action))
 
             state_dim = states.shape[1]
             rows = int(np.sqrt(state_dim))
             cols = state_dim // rows
+            print(cols)
             f, axes = plt.subplots(rows, cols, figsize=(3*cols, 3*rows))
             f.suptitle('Model predictions (red) versus ground truth (black) for open-loop predictions')
             for i, (ax, state_i, pred_state_i) in enumerate(zip(axes.ravel(), states.T, pred_states.T)):
                 ax.set_title('state {0}'.format(i))
+                print(state_i.shape, pred_state_i.shape)
                 ax.plot(state_i, color='k')
                 ax.plot(pred_state_i, color='r')
             plt.tight_layout()
@@ -155,12 +162,12 @@ class ModelBasedRL(object):
         logger.info('Training policy....')
         ### PROBLEM 2
         ### YOUR CODE HERE
-        raise NotImplementedError
+        self._train_policy(self._random_dataset)
 
         logger.info('Evaluating policy...')
         ### PROBLEM 2
         ### YOUR CODE HERE
-        raise NotImplementedError
+        eval_dataset = self._gather_rollouts(self._policy, self._num_onpolicy_rollouts)
 
         logger.info('Trained policy')
         self._log(eval_dataset)
@@ -184,16 +191,16 @@ class ModelBasedRL(object):
             ### PROBLEM 3
             ### YOUR CODE HERE
             logger.info('Training policy...')
-            raise NotImplementedError
+            self._train_policy(dataset)
 
             ### PROBLEM 3
             ### YOUR CODE HERE
             logger.info('Gathering rollouts...')
-            raise NotImplementedError
+            new_dataset = self._gather_rollouts(self._policy, self._num_onpolicy_rollouts)
 
             ### PROBLEM 3
             ### YOUR CODE HERE
             logger.info('Appending dataset...')
-            raise NotImplementedError
+            dataset.append(new_dataset)
 
             self._log(new_dataset)
