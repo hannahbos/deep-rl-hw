@@ -75,6 +75,15 @@ def build_rnn(x, h, output_size, scope, n_layers, size, activation=tf.tanh, outp
     #                           ----------PROBLEM 2----------
     #====================================================================================#
     # YOUR CODE HERE
+    with tf.variable_scope(scope):
+        x = build_mlp(x, x.get_shape()[-1], scope, n_layers + 1, size, activation,
+            output_activation, regularizer)
+        ## build gru
+        gru = tf.contrib.rnn.GRUCell(num_units=output_size, activation=activation, dtype=tf.float32)
+        x, hidden_state = tf.nn.dynamic_rnn(cell=gru, inputs=x, dtype=tf.float32, initial_state=h)
+        ## just need the last state of output
+        x = x[:, -1, :]
+        return x, hidden_state
 
 def build_policy(x, h, output_size, scope, n_layers, size, gru_size, recurrent=True, activation=tf.tanh, output_activation=None):
     """
@@ -377,26 +386,32 @@ class Agent(object):
                 # first meta ob has only the observation
                 # set a, r, d to zero, construct first meta observation in meta_obs
                 # YOUR CODE HERE
-
+                meta_obs[steps+self.history] = np.hstack([ob, np.zeros(self.ac_dim), [0], [0]])
                 steps += 1
 
             # index into the meta_obs array to get the window that ends with the current timestep
             # please name the windowed observation `in_` for compatibilty with the code that adds to the replay buffer (lines 418, 420)
             # YOUR CODE HERE
+            in_ = meta_obs[steps:steps+self.history]
 
             hidden = np.zeros((1, self.gru_size), dtype=np.float32)
 
             # get action from the policy
             # YOUR CODE HERE
+            ac = self.sess.run(self.sy_sampled_ac, feed_dict={
+                self.sy_ob_no: np.array([in_]), self.sy_hidden: hidden})
+            ac = ac[0]
 
             # step the environment
             # YOUR CODE HERE
+            ob, rew, done, _ = env.step(ac)
 
             ep_steps += 1
 
             done = bool(done) or ep_steps == self.max_path_length
             # construct the meta-observation and add it to meta_obs
             # YOUR CODE HERE
+            meta_obs[steps+self.history] = np.hstack([ob, ac, rew, done])
 
             rewards.append(rew)
             steps += 1
@@ -669,6 +684,17 @@ def train_PG(
 
     # tensorflow: config, session, variable initialization
     agent.init_tf_sess()
+
+    # count trainable variables
+    total_parameters = 0
+    for variable in tf.trainable_variables():
+        # shape is an array of tf.Dimension
+        shape = variable.get_shape()
+        variable_parameters = 1
+        for dim in shape:
+            variable_parameters *= dim.value
+        total_parameters += variable_parameters
+    print('total parameters', total_parameters)
 
     #========================================================================================#
     # Training Loop

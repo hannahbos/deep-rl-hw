@@ -22,7 +22,7 @@ class ObservedPointEnv(Env):
         self.reset_task()
         self.reset()
 
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(2,))
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(2+len(self.tasks),))
         self.action_space = spaces.Box(low=-0.1, high=0.1, shape=(2,))
 
     def reset_task(self, is_evaluation=False):
@@ -35,13 +35,17 @@ class ObservedPointEnv(Env):
         self._task = self.tasks[self.task_idx]
         goals = [[-1, -1], [-1, 1], [1, -1], [1, 1]]
         self._goal = np.array(goals[self.task_idx])*10
+        self.one_hot = np.zeros(len(self.tasks))
+        self.one_hot[self.task_idx] = 1
 
     def reset(self):
         self._state = np.array([0, 0], dtype=np.float32)
         return self._get_obs()
 
     def _get_obs(self):
-        return np.copy(self._state)
+        obs = np.copy(self._state)
+        obs = np.hstack([obs, self.one_hot])
+        return obs
 
     def step(self, action):
         x, y = self._state
